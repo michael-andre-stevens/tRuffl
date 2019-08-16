@@ -1,13 +1,19 @@
 Package: tRuffl
-Title: What the Package Does (One Line, Title Case)
+Title: Interface Between Buffl And CleverR
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Michael",
+           family = "Stevens",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: What license it uses
+           email = "michael.andre.stevens@gmail.com",
+           comment = c(ORCID = "https://orcid.org/0000-0002-1999-1575"))
+Description: A system for doing basic statistical tests on data gathered trough the Buffl platform. Data can be provided in a csv file or trough a REST API.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Imports: 
+    dplyr,
+    CleverR,
+    magrittr,
+    rlang
+RoxygenNote: 6.1.1
