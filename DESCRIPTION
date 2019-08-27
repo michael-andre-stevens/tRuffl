@@ -15,5 +15,17 @@ Imports:
     dplyr,
     CleverR,
     magrittr,
-    rlang
+    rlang,
+    readr,
+    tidyselect,
+    tibble,
+    stats,
+    tidyr,
+    stringr,
+    Hmisc,
+    mlogit,
+    nnet,
+    ordinal,
+    MASS,
+    lme4
 RoxygenNote: 6.1.1
