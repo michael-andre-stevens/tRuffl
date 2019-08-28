@@ -291,7 +291,14 @@ cleanup_buffl_checkbox <- function(x) {
     attr(binvar[,i], "label0") <- question_label
   }
 
-  binvar %>% dplyr::mutate_all(as.integer)
+  my_as_integer <- function(x) {
+    atx <- attributes(x)
+    x <- as.integer(x)
+    attributes(x) <- atx
+    x
+  }
+
+  binvar %>% dplyr::mutate_all(my_as_integer)
 }
 
 

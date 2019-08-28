@@ -27,5 +27,7 @@ Imports:
     nnet,
     ordinal,
     MASS,
-    lme4
+    lme4,
+    purrr,
+    car
 RoxygenNote: 6.1.1
