@@ -29,5 +29,7 @@ Imports:
     MASS,
     lme4,
     purrr,
-    car
+    car,
+    jsonlite,
+    lubridate
 RoxygenNote: 6.1.1
