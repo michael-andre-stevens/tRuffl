@@ -4,11 +4,12 @@
 #'
 #' @param path path to a file
 #' @param guess_max maximum number of records to use for guessing column types
+#' @param csv type of csv file (can be csv or csv2)
 #' @param ... further arguments passed to or from other methods
 #'
 #' @return a tibble
 #' @export
-read_buffl <- function(path, guess_max=10000, ...) {
+read_buffl <- function(path, guess_max=10000, csv="csv", ...) {
 
   # add leading zeroes to numbers
   # so that string sort
@@ -49,9 +50,16 @@ read_buffl <- function(path, guess_max=10000, ...) {
     x %>% dplyr::select(nn$names)
   }
 
+  if(csv=="csv") {
+    raw_input <- suppressMessages(readr::read_csv(path, guess_max=guess_max, na = c("", "NA", "N/A"), ...))
+  } else if (csv=="csv2") {
+    raw_input <- suppressMessages(readr::read_delim(delim=";", path, guess_max=guess_max, na = c("", "NA", "N/A"), ...))
+  } else {
+    stop("Unknown csv type")
+  }
 
   # tbd: within q block, order as: start, stop, type, question, answer(s), ...
-  suppressMessages(readr::read_csv(path, guess_max=guess_max, na = c("", "NA", "N/A"), ...)) %>%
+  raw_input %>%
     fix_buffl_names() %>%
     reorder_buffl_names() %>%
     dplyr::select(
@@ -95,7 +103,7 @@ first_non_na <- function(x) {
 #' @param x a tibble with the variables that are logged for a video (type, startedAt, finishedAt, question).
 #'
 #' @return the response variable that was computed (all missings as no respons is expected)
-#' @export
+#' @keywords internal
 cleanup_buffl_video <- function(x) {
 
   # ungroup
@@ -115,7 +123,6 @@ cleanup_buffl_video <- function(x) {
 
   attr(value, "label") <- question_label
 
-
   value
 }
 
@@ -125,7 +132,7 @@ cleanup_buffl_video <- function(x) {
 #' @param x a tibble with the variables that are logged for an open question (type, startedAt, finishedAt, question, answer)
 #'
 #' @return the response variable that was computed (a character variable)
-#' @export
+#' @keywords internal
 cleanup_buffl_openquestion <- function(x) {
 
   # ungroup
@@ -151,7 +158,7 @@ cleanup_buffl_openquestion <- function(x) {
 #' @param x a tibble with the variables that are logged for a slider (type, startedAt, finishedAt, question, answer)
 #'
 #' @return the response variable that was computed (an integer variable)
-#' @export
+#' @keywords internal
 cleanup_buffl_slider <- function(x) {
 
   # ungroup
@@ -178,7 +185,7 @@ cleanup_buffl_slider <- function(x) {
 #' @param x a tibble with the variables that are logged for a multiple choice item (type, startedAt, finishedAt, question, answer, answerString)
 #'
 #' @return the response variable that was computed (a factor)
-#' @export
+#' @keywords internal
 cleanup_buffl_multiplechoice <- function(x) {
 
   # ungroup
@@ -233,7 +240,7 @@ cleanup_buffl_multiplechoice <- function(x) {
 #' @param x a tibble with the variables that are logged for a multiple checkbox item (type, startedAt, finishedAt, question, answers, answerStrings)
 #'
 #' @return the response variables that were computed (a set of logical variables)
-#' @export
+#' @keywords internal
 cleanup_buffl_checkbox <- function(x) {
 
   # ungroup
