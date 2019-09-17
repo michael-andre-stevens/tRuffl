@@ -68,7 +68,6 @@ read_buffl_csv <- function(path, guess_max=10000, csv="csv", ...) {
       tidyselect::matches("user"),
       tidyselect::matches("block"),
       tidyselect::everything())
-
 }
 
 

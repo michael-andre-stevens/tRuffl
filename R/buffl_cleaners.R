@@ -25,8 +25,6 @@ cleanup_buffl_sociodemo <- function(x) {
 
 
 
-
-
 #' Cleanup a buffl item
 #'
 #' @param x a tibble with the log of the complete questionnaire
@@ -276,6 +274,20 @@ cleanup_buffl_checkbox <- function(x) {
     tidyr::spread('value', 'key', fill=0) %>%
     dplyr::select(-.data$idx, -"<NA>")
 
+  # numeric matrix that indicates the order of the alternatives
+  rankvar <- numvar %>%
+    data.frame %>%
+    dplyr::mutate(X0 = Inf) %>%
+    dplyr::mutate(idx = 1:dplyr::n()) %>%
+    tidyr::gather('key', 'value', -'idx') %>%
+    dplyr::mutate(value=.data$value+1) %>%
+    dplyr::mutate(key=as.numeric(stringr::str_replace(.data$key, "X", ""))) %>%
+    dplyr::distinct() %>%
+    stats::na.omit() %>%
+    dplyr::distinct(.data$idx, .data$value, .keep_all=TRUE) %>%
+    tidyr::spread('value', 'key', fill=NA) %>%
+    dplyr::select(-.data$idx, -.data$`Inf`)
+
   # generate mapping table for levels and labels
   numvals <- as.numeric(numvar+1) %>%
     unique() %>%
@@ -296,6 +308,11 @@ cleanup_buffl_checkbox <- function(x) {
     attr(binvar[,i], "label0") <- question_label
   }
 
+  for (i in 1:ncol(rankvar)) {
+    attr(rankvar[,i], "label") <- paste(inlabels[i])
+    attr(rankvar[,i], "label0") <- question_label
+  }
+
   my_as_integer <- function(x) {
     atx <- attributes(x)
     x <- as.integer(x)
@@ -303,6 +320,12 @@ cleanup_buffl_checkbox <- function(x) {
     x
   }
 
-  binvar %>% dplyr::mutate_all(my_as_integer)
+  binvar <- binvar %>% dplyr::mutate_all(my_as_integer)
+  rankvar <- rankvar %>% dplyr::mutate_all(my_as_integer)
+
+  names(binvar) <- paste("I", names(binvar), sep="")
+  names(rankvar) <- paste("R", names(rankvar), sep="")
+
+  dplyr::bind_cols(binvar, rankvar)
 }
 
