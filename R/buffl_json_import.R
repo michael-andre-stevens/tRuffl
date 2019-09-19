@@ -4,11 +4,11 @@
 #'
 #' @return a list
 #' @export
-read_buffl_json <- function(path) {
+import_json <- function(path) {
 
   x <- jsonlite::fromJSON(path, flatten=TRUE)
 
-  sociodemo <- read_json_sociodemo(x)
+  sociodemo <- import_json_sociodemo(x)
 
   get_number_of_questions <- function(json) {
     length(json$results$blockResults[[1]])
@@ -16,7 +16,7 @@ read_buffl_json <- function(path) {
 
   questions <- list()
   for (i in 1:get_number_of_questions(x)) {
-    questions[[i]] <- read_json_question(x, i)
+    questions[[i]] <- import_json_question(x, i)
   }
   questions <- data.frame(questions)
 
@@ -32,7 +32,7 @@ read_buffl_json <- function(path) {
 #'
 #' @return the sociodemo variables
 #' @keywords internal
-read_json_sociodemo <- function(x) {
+import_json_sociodemo <- function(x) {
 
   campaign.name = x$name
 
@@ -53,7 +53,7 @@ read_json_sociodemo <- function(x) {
 #'
 #' @return x with cleaned variable(s)
 #' @keywords internal
-read_json_question <- function(x, number) {
+import_json_question <- function(x, number) {
 
   get_question_type <- function(json, question) {
 

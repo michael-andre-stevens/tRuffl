@@ -6,7 +6,7 @@
 #'
 #' @return the cleaned variable
 #' @export
-cleanup_buffl_sociodemo <- function(x) {
+cleanup_sociodemo <- function(x) {
 
   if(is.logical(x)) {
     out <- factor(x, levels=c(FALSE, TRUE), labels=c("FALSE", "TRUE"))
@@ -32,7 +32,7 @@ cleanup_buffl_sociodemo <- function(x) {
 #'
 #' @return x with cleaned variable(s)
 #' @export
-cleanup_buffl_question <- function(x, number) {
+cleanup_question <- function(x, number) {
 
   number <- sprintf("%03d", number[1])
   outname <- sprintf("Q%s", number[1])
@@ -45,15 +45,15 @@ cleanup_buffl_question <- function(x, number) {
     dplyr::pull()
 
   if(question_type == "Slider") {
-    out <- cleanup_buffl_slider(df)
+    out <- cleanup_slider(df)
   } else  if(question_type == "Multiple Choice Question") {
-    out <- cleanup_buffl_multiplechoice(df)
+    out <- cleanup_multiplechoice(df)
   } else if (question_type == "Checkboxes") {
-    out <- cleanup_buffl_checkbox(df)
+    out <- cleanup_checkbox(df)
   } else if (question_type == "Video") {
-    out <- cleanup_buffl_video(df)
+    out <- cleanup_video(df)
   } else if (question_type == "Open Question") {
-    out <- cleanup_buffl_openquestion(df)
+    out <- cleanup_openquestion(df)
   } else {
     stop("Unknown variable type")
   }
@@ -100,7 +100,7 @@ first_non_na <- function(x) {
 #'
 #' @return the response variable that was computed (all missings as no respons is expected)
 #' @keywords internal
-cleanup_buffl_video <- function(x) {
+cleanup_video <- function(x) {
 
   # ungroup
   x <- dplyr::ungroup(x)
@@ -129,7 +129,7 @@ cleanup_buffl_video <- function(x) {
 #'
 #' @return the response variable that was computed (a character variable)
 #' @keywords internal
-cleanup_buffl_openquestion <- function(x) {
+cleanup_openquestion <- function(x) {
 
   # ungroup
   x <- dplyr::ungroup(x)
@@ -155,7 +155,7 @@ cleanup_buffl_openquestion <- function(x) {
 #'
 #' @return the response variable that was computed (an integer variable)
 #' @keywords internal
-cleanup_buffl_slider <- function(x) {
+cleanup_slider <- function(x) {
 
   # ungroup
   x <- dplyr::ungroup(x)
@@ -182,7 +182,7 @@ cleanup_buffl_slider <- function(x) {
 #'
 #' @return the response variable that was computed (a factor)
 #' @keywords internal
-cleanup_buffl_multiplechoice <- function(x) {
+cleanup_multiplechoice <- function(x) {
 
   # ungroup
   x <- dplyr::ungroup(x)
@@ -237,7 +237,7 @@ cleanup_buffl_multiplechoice <- function(x) {
 #'
 #' @return the response variables that were computed (a set of logical variables)
 #' @keywords internal
-cleanup_buffl_checkbox <- function(x) {
+cleanup_checkbox <- function(x) {
 
   # ungroup
   x <- dplyr::ungroup(x)

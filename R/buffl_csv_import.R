@@ -7,7 +7,7 @@
 #'
 #' @return a tibble
 #' @export
-read_buffl_csv <- function(path, guess_max=10000, csv="csv", ...) {
+import_csv <- function(path, guess_max=10000, csv="csv", ...) {
 
   # add leading zeroes to numbers
   # so that string sort
