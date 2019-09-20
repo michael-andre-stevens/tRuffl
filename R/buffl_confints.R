@@ -177,7 +177,7 @@ confint_mixed_model <- function(fit) {
   # apply the formula
   newdata <- fit@frame %>% dplyr::filter(.data$id==1)
   mm <- stats::model.matrix(stats::terms(fit), newdata)
-  newdata$fit <- mm %*% lme4::fixef(fit)
+  newdata$fit <- as.numeric(mm %*% lme4::fixef(fit))
 
   pvar1 <- diag(mm %*% tcrossprod(as.matrix(stats::vcov(fit)),as.matrix(mm)))
   #pvar1 <- diag(mm %*% stats::vcov(fit) %*% t(mm)) # fixed effects variance
