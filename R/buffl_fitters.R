@@ -7,9 +7,9 @@
 #' @keywords internal
 make_data <- function(y, x=NULL) {
   if (is.null(x)) {
-    data.frame(y=y)
+    data.frame(y=dplyr::pull(y))
   } else {
-    data.frame(y=y, x=x)
+    data.frame(y=dplyr::pull(y), x=dplyr::pull(x))
   }
 }
 
