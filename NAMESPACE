@@ -3,6 +3,8 @@
 export("%>%")
 export(cleanup_question)
 export(cleanup_sociodemo)
+export(compute_checkbox_order)
+export(compute_checkbox_presence)
 export(confint_fixed_model)
 export(confint_linear_model)
 export(confint_logistic_model)

@@ -13,6 +13,7 @@ make_data <- function(y, x=NULL) {
   }
 }
 
+
 #' Process the arguments of a fitter function
 #'
 #' @param y the dependent variable
@@ -220,6 +221,7 @@ fit_ordinal_model2 <- function(y, x=NULL) {
 #' @return the model fit
 #' @export
 fit_mixed_model <- function(y, x=NULL) {
+
 
   dfx <- make_long_data(y, x)
   form <- make_mixed_formula(y, x)

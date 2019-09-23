@@ -10,17 +10,22 @@ json_serialize <- function(x) {
 
     classx <- class(x)[1]
 
-    if (!classx %in% c("integer", "numeric", "ordered", "factor")) {
+    if (!classx %in% c("integer", "numeric", "ordered", "factor", "checkbox")) {
       stop("unknown variable type")
     }
 
     if (classx %in% c("ordered", "factor")) {
       levelsx <- levels(x)
+      valuesx <- as.numeric(x)
+    } else if (classx %in% "checkbox") {
+      levelsx <- attr(x, "levels")
+      valuesx <- as.list(x)
     } else {
       levelsx <- NULL
+      valuesx <- as.numeric(x)
     }
 
-    valuesx <- as.numeric(x)
+
     labelx <- attr(x, "label")
     label0x <- attr(x, "label0")
 
@@ -52,12 +57,14 @@ json_unserialize <- function(x) {
     labelx <- x$label
     label0x <- x$label0
 
-    if (!classx %in% c("integer", "numeric", "ordered", "factor")) {
+    if (!classx %in% c("integer", "numeric", "ordered", "factor", "checkbox")) {
       stop("unknown variable type")
     }
-
     if (classx %in% c("ordered", "factor")) {
       x <- factor(valuesx, labels=levelsx, ordered = classx=="ordered")
+    } else if (classx %in% "checkbox") {
+      x <- valuesx
+      attr(x, "levels") <- levelsx
     } else {
       x <- valuesx
     }
@@ -79,6 +86,6 @@ json_unserialize <- function(x) {
     x[[i]] <- unserialize_variable(x[[i]])
   }
 
-  tibble::as_tibble(data.frame(x))
+  tibble::as_tibble(data.frame(x, stringsAsFactors = FALSE))
 }
 
