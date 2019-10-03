@@ -31,5 +31,7 @@ Imports:
     purrr,
     car,
     jsonlite,
-    lubridate
+    lubridate,
+    effects,
+    forcats
 RoxygenNote: 6.1.1
