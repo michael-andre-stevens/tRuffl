@@ -63,8 +63,9 @@ json_unserialize <- function(x) {
     if (classx %in% c("ordered", "factor")) {
       x <- factor(valuesx, labels=levelsx, ordered = classx=="ordered")
     } else if (classx %in% "checkbox") {
-      x <- valuesx
+      x <- as.character(valuesx)
       attr(x, "levels") <- levelsx
+      attr(x, "class") <- "checkbox"
     } else {
       x <- valuesx
     }
@@ -79,13 +80,40 @@ json_unserialize <- function(x) {
 
     x
   }
-
   x <- jsonlite::fromJSON(x)
 
   for(i in names(x)) {
     x[[i]] <- unserialize_variable(x[[i]])
   }
 
-  tibble::as_tibble(data.frame(x, stringsAsFactors = FALSE))
+
+  tibble::as_tibble(data.frame(x, stringsAsFactors=FALSE))
+}
+
+
+#' Convert a checkbox function to a data.frame
+#'
+#' We need this function as R only wants to enter known variable types
+#' into a data.frame
+#'
+#' @param x a checkbox question
+#'
+#' @return a data.frame with the checkbox question and its attributes
+#' @method as.data.frame checkbox
+#' @export
+as.data.frame.checkbox <- function(x, ...) {
+
+  nm <- paste(deparse(substitute(x), width.cutoff = 500L),
+              collapse = " ")
+
+  xlevels <- attr(x, "levels")
+  xlabel <- attr(x, "label")
+  x <- as.character(x)
+  x <- data.frame(x, stringsAsFactors=FALSE)
+  attr(x$x, "levels") <- xlevels
+  attr(x$x, "label") <- xlabel
+  attr(x$x, "class") <- "checkbox"
+  names(x) <- names(nm)
+  x
 }
 
