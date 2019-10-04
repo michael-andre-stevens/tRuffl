@@ -97,6 +97,7 @@ json_unserialize <- function(x) {
 #' into a data.frame
 #'
 #' @param x a checkbox question
+#' @param ... further arguments passed to or from other methods
 #'
 #' @return a data.frame with the checkbox question and its attributes
 #' @method as.data.frame checkbox

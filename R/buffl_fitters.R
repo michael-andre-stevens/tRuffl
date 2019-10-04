@@ -1,3 +1,44 @@
+#' Fit a model
+#'
+#' This is the main entry function that calls the most appropriate fitter function
+#'
+#' @param data a dataframe with the dependent variable and an optional covariate
+#' @param prefer_mixed_model if TRUE (the default) prefer a mixed effects model for
+#' checkbox questions. If FALSE prefer a fixed effects model for checkbox questions
+#' (faster but underestimates the variance of the estimates)
+#'
+#' @return the model fit
+#' @export
+fit_model <- function(data, prefer_mixed_model=TRUE) {
+
+  depvar <- data[,1] %>% dplyr::pull()
+
+
+  if (is.numeric(depvar)) {
+    fit_linear_model(data)
+
+  } else if (is.factor(depvar)) {
+    if(length(levels(depvar)) == 2) {
+      fit_logistic_model(data)
+    } else if (is.ordered(depvar)) {
+      fit_ordinal_model(data)
+    } else {
+      fit_multinomial_model(data)
+    }
+
+  } else if (class(depvar)=="checkbox") {
+    if(prefer_mixed_model) {
+      fit_mixed_model(data)
+    } else {
+      fit_fixed_model(data)
+    }
+
+  } else {
+    stop("fit model expects a numeric, factor or checkbox question")
+  }
+}
+
+
 #' Fit a linear model
 #'
 #' This model is used for slider questions
@@ -175,6 +216,7 @@ fit_ordinal_model <- function(data) {
   }
 
   MASS::polr(form, data=data, Hess=TRUE)
+  #ordinal::clm(form, data=data)
 }
 
 

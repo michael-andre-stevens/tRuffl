@@ -1,4 +1,39 @@
-#' Confidence intervals around the intercept of a linear model
+#' Extract confidence intervals from a
+#'
+#' This is the main entry function that calls the most appropriate interval function
+#'
+#' @param fit a fitted model
+#'
+#' @return the model fit
+#' @export
+confint_model <- function(fit) {
+
+  class_fit <- class(fit)[1]
+
+  if(class_fit=="lm") {
+    confint_linear_model(fit)
+  } else if (class_fit=="glm"){
+    if("alternative" %in% all.vars(stats::formula(fit))) {
+      confint_fixed_model(fit)
+    } else {
+      confint_logistic_model(fit)
+    }
+
+
+  } else if (class_fit=="glmerMod") {
+    confint_mixed_model(fit)
+  } else if (class_fit=="multinom") {
+    confint_multinomial_model(fit)
+  } else if (class_fit=="polr") {
+    confint_ordinal_model(fit)
+  } else {
+    stop("confint_model expects an lm, glm, glmerMod, multinom or polr fit")
+  }
+
+}
+
+
+#' Confidence intervals around the estimates of a linear model
 #'
 #' @param fit the fitted model
 #'
@@ -114,7 +149,7 @@ confint_mixed_model <- function(fit) {
 
   vars <- all.vars(stats::formula(fit))
 
-    # work around bug
+  # work around bug in effects function
   if(exists("longdata")) {
     longdata5684354543450000 <- longdata
   }
@@ -185,49 +220,6 @@ confint_mixed_model_bolker <- function(fit) {
     tibble::column_to_rownames(var="alternative")
 }
 
-
-#' Compute effects for a multinomial/ordinal model with one predictor
-#'
-#' @param fit the fitted model
-#'
-#' @return effect estimates with confidence interval
-#' @keywords internal
-confint_multinomial_ordinal_model <- function(fit) {
-
-  term <- stringr::str_split(fit$terms, "~")[[3]]
-  fx <- effects::effect(term, fit)
-
-  addx <- function(x) x %>% dplyr::mutate(X=paste0("X", 1:dplyr::n()))
-  addy <- function(x) x %>% dplyr::mutate(Y=paste0("Y", 1:dplyr::n()))
-  set_names <- function(x) {
-    stats::setNames(x, paste0("Y", 1:ncol(x)))
-  }
-
-  fxx <- fx$x %>% addx()
-  fyy <- data.frame(alternative=fx$y) %>% addy()
-
-  longform <- function(x) {
-    x %>%
-      data.frame() %>%
-      set_names() %>%
-      addx() %>%
-      tidyr::gather("Y", "value", -.data$X)
-  }
-
-  fxf <- fx$prob %>% longform() %>% dplyr::rename(fit=.data$value)
-  fxl <- fx$lower.prob %>% longform() %>% dplyr::rename(lower=.data$value)
-  fxu <- fx$upper.prob %>% longform() %>% dplyr::rename(upper=.data$value)
-
-  fxf %>%
-    dplyr::inner_join(fxl, by = c("X", "Y")) %>%
-    dplyr::inner_join(fxu, by = c("X", "Y")) %>%
-    dplyr::inner_join(fxx, by = "X") %>%
-    dplyr::inner_join(fyy, by = "Y") %>%
-    dplyr::arrange(.data$Y, .data$X) %>%
-    dplyr::select(.data$alternative, tidyselect::matches(term),
-                  .data$fit, .data$lower, .data$upper) %>%
-    dplyr::mutate(alternative=forcats::fct_inorder(.data$alternative))
-}
 
 #' Confidence intervals around the intercept of a multinomial model
 #'
@@ -370,9 +362,6 @@ confint_ordinal_model <- function(fit) {
     out_prob <- reshape_prediction(out_prob) %>%
       add_alternative("probability mass")
 
-    print(g_prob)
-    #print(g_cum)
-    #print(g_revcum)
     dplyr::bind_rows(out_prob, out_cum, out_revcum)
 
   } else if (length(vars)==2) {
@@ -385,4 +374,47 @@ confint_ordinal_model <- function(fit) {
 }
 
 
+
+#' Compute effects for a multinomial/ordinal model with one predictor
+#'
+#' @param fit the fitted model
+#'
+#' @return effect estimates with confidence interval
+#' @keywords internal
+confint_multinomial_ordinal_model <- function(fit) {
+
+  term <- stringr::str_split(fit$terms, "~")[[3]]
+  fx <- effects::effect(term, fit)
+
+  addx <- function(x) x %>% dplyr::mutate(X=paste0("X", 1:dplyr::n()))
+  addy <- function(x) x %>% dplyr::mutate(Y=paste0("Y", 1:dplyr::n()))
+  set_names <- function(x) {
+    stats::setNames(x, paste0("Y", 1:ncol(x)))
+  }
+
+  fxx <- fx$x %>% addx()
+  fyy <- data.frame(alternative=fx$y) %>% addy()
+
+  longform <- function(x) {
+    x %>%
+      data.frame() %>%
+      set_names() %>%
+      addx() %>%
+      tidyr::gather("Y", "value", -.data$X)
+  }
+
+  fxf <- fx$prob %>% longform() %>% dplyr::rename(fit=.data$value)
+  fxl <- fx$lower.prob %>% longform() %>% dplyr::rename(lower=.data$value)
+  fxu <- fx$upper.prob %>% longform() %>% dplyr::rename(upper=.data$value)
+
+  fxf %>%
+    dplyr::inner_join(fxl, by = c("X", "Y")) %>%
+    dplyr::inner_join(fxu, by = c("X", "Y")) %>%
+    dplyr::inner_join(fxx, by = "X") %>%
+    dplyr::inner_join(fyy, by = "Y") %>%
+    dplyr::arrange(.data$Y, .data$X) %>%
+    dplyr::select(.data$alternative, tidyselect::matches(term),
+                  .data$fit, .data$lower, .data$upper) %>%
+    dplyr::mutate(alternative=forcats::fct_inorder(.data$alternative))
+}
 
