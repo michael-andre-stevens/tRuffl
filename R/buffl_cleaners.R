@@ -325,7 +325,7 @@ compute_checkbox_presence <- function(x) {
     dplyr::mutate(key=1) %>%
     dplyr::distinct() %>%
     tidyr::spread('value', 'key', fill=0) %>%
-    dplyr::select(-.data$idx, -"<NA>")
+    dplyr::select(-.data$idx, -matches("<NA>"))
 
   # generate label for each question
   inlevels <- attr(x, "levels")
@@ -355,10 +355,16 @@ compute_checkbox_order <- function(x) {
     x
   }
 
+  fix_colnames <- function(x) {
+    colnames(x) <- paste0("X", 1:ncol(x))
+    x
+  }
+
   rankvar <- x %>%
     stringr::str_split(",", simplify=TRUE) %>%
     apply(2, as.numeric) %>%
-    data.frame %>%
+    fix_colnames() %>%
+    data.frame() %>%
     dplyr::mutate(X0 = Inf) %>%
     dplyr::mutate(idx = 1:dplyr::n()) %>%
     tidyr::gather('key', 'value', -'idx') %>%
