@@ -325,7 +325,7 @@ compute_checkbox_presence <- function(x) {
     dplyr::mutate(key=1) %>%
     dplyr::distinct() %>%
     tidyr::spread('value', 'key', fill=0) %>%
-    dplyr::select(-.data$idx, -matches("<NA>"))
+    dplyr::select(-.data$idx, -dplyr::matches("<NA>"))
 
   # generate label for each question
   inlevels <- attr(x, "levels")

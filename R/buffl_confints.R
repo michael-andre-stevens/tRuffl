@@ -18,8 +18,6 @@ confint_model <- function(fit) {
     } else {
       confint_logistic_model(fit)
     }
-
-
   } else if (class_fit=="glmerMod") {
     confint_mixed_model(fit)
   } else if (class_fit=="multinom") {
@@ -29,7 +27,6 @@ confint_model <- function(fit) {
   } else {
     stop("confint_model expects an lm, glm, glmerMod, multinom or polr fit")
   }
-
 }
 
 
@@ -234,7 +231,7 @@ confint_multinomial_model <- function(fit) {
 
   if (length(vars)==1) {
 
-    # use the delta method
+    # use the delta method for intercept-only model
     ncat <- nrow(stats::coef(fit))
     parameterNames <- paste0("b", 1:ncat)
 
@@ -264,7 +261,10 @@ confint_multinomial_model <- function(fit) {
       dplyr::select(.data$alternative, tidyselect::everything())
 
   } else if (length(vars)==2) {
-    confint_multinomial_ordinal_model(fit)
+
+    # use effects function if we have a main effect in the model
+    confint_multinomial_ordinal_effect(fit)
+
   } else {
     stop("confint_model expects a model with maximally one predictor")
   }
@@ -285,6 +285,7 @@ confint_ordinal_model <- function(fit) {
 
   if (length(vars)==1) {
 
+    # use the delta method for intercept-only model
     ncat <- length(fit$zeta)
     beta_names <- NULL
     if(length(stats::coef(fit))>0) {
@@ -293,7 +294,7 @@ confint_ordinal_model <- function(fit) {
     zeta_names <- paste0("zeta", seq_along(fit$zeta))
     parameterNames <- c(beta_names, zeta_names)
 
-    # use the delta method
+    # call the delta method
     # polr intercepts are stored in zeta, not in beta
     # we need a wrapper around the delta method
     # that takes this into account
@@ -346,7 +347,7 @@ confint_ordinal_model <- function(fit) {
       tibble::add_row(fit=1, lower=1, upper=1, .before=1) %>%
       add_alternative("reverse cumulatve probability")
 
-    # marginal probability
+    # probability mass
     g_prob <- vector("character", ncat+1)
     g_prob[1] <- g_cum[1]
     out_prob <- list()
@@ -366,13 +367,76 @@ confint_ordinal_model <- function(fit) {
 
   } else if (length(vars)==2) {
 
-    confint_multinomial_ordinal_model(fit)
+    # collect some information about the model
+    term <- stringr::str_split(fit$terms, "~")[[3]]
+    fx <- effects::effect(term, fit)
+
+    modmat <- fx$model.matrix
+    intmat <- matrix(rep(0, length(fit$zeta)^2), nrow=length(fit$zeta))
+    diag(intmat) <- 1
+
+    lvls <- fx$variables[[1]]$levels
+    zetas <- names(fit$zeta)
+
+    # helper function for computing ci's
+    compute_confint <- function(fit, hypothesis) {
+
+      beta <- c(-stats::coef(fit), fit$zeta)
+      vc <- stats::vcov(fit)
+      vc[1,] <- 	-vc[1,]
+      vc[,1] <- 	-vc[,1]
+
+      mean <- hypothesis %*% beta
+      se <- sqrt(hypothesis %*% vc %*% hypothesis)
+      lower <- mean - stats::qnorm(.975) * se
+      upper <- mean + stats::qnorm(.975) * se
+      c(mean, lower, upper)
+    }
+
+    # compute cumulative probability at each boundary
+    out <- data.frame(alternative = rep(zetas, each=length(lvls)), predictor = rep(lvls, times=length(zetas)), fit=NA, lower=NA, upper=NA)
+    k <- 1
+    for (j in 1:nrow(intmat)) {
+      for (i in 1:nrow(modmat)) {
+        hypothesis <- c(modmat[i,], intmat[j,])
+        out[k, 3:5] <- compute_confint(fit, hypothesis) %>% stats::plogis()
+        k <- k+1
+      }
+    }
+
+    # compute cumulative probability for each category
+    nalt <- length(fit$lev)
+    nlev <- length(lvls)
+    cumulative <- data.frame(alternative=rep(fit$lev, each=length(lvls)),  predictor = rep(lvls, times=length(fit$lev)), fit=1, lower=1, upper=1)
+
+    ((nalt-1) * nlev)
+    cumulative[1:((nalt-1) * nlev),3:5] <- out[,3:5]
+
+    # compute reverse cumulative probability for each category
+    reverse_cumulative <- data.frame(alternative=rep(fit$lev, each=length(lvls)),  predictor = rep(lvls, times=length(fit$lev)), fit=1, lower=1, upper=1)
+    reverse_cumulative[(nlev+1):(nalt*nlev),3:5] <- 1-out[,3:5]
+    tmp <- reverse_cumulative$upper
+    reverse_cumulative$upper <- reverse_cumulative$lower
+    reverse_cumulative$lower <- tmp
+
+    # compute probability mass
+    probability_mass <- fit %>% confint_multinomial_ordinal_effect()
+
+    # format output
+    cumulative <- dplyr::rename(cumulative, !!term := "predictor")
+    reverse_cumulative <- dplyr::rename(reverse_cumulative, !!term := "predictor")
+
+    probability_mass$probability <- "probability mass"
+    cumulative$probability <- "cumulative probability"
+    reverse_cumulative$probability <- "reverse cumulative probability"
+
+    output <- dplyr::bind_rows(probability_mass, cumulative, reverse_cumulative)
+    output %>% dplyr::select(.data$probability, dplyr::everything())
 
   } else {
     stop("confint_model expects a model with maximally one predictor")
   }
 }
-
 
 
 #' Compute effects for a multinomial/ordinal model with one predictor
@@ -381,7 +445,7 @@ confint_ordinal_model <- function(fit) {
 #'
 #' @return effect estimates with confidence interval
 #' @keywords internal
-confint_multinomial_ordinal_model <- function(fit) {
+confint_multinomial_ordinal_effect <- function(fit) {
 
   term <- stringr::str_split(fit$terms, "~")[[3]]
   fx <- effects::effect(term, fit)

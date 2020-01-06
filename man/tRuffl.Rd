@@ -3,7 +3,6 @@
 \docType{package}
 \name{tRuffl}
 \alias{tRuffl}
-\alias{tRuffl-package}
 \title{tRuffl: Interface Between Buffl And CleverR}
 \description{
 The foo package provides three categories of important functions:
