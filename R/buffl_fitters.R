@@ -103,7 +103,6 @@ make_long_data <- function(data) {
 
     longdata <- data %>%
     tibble::add_column(yy) %>%
-    tidyr::unpack(yy) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(id = 1:dplyr::n()) %>%
     dplyr::select(-tidyselect::matches(nd[1])) %>%
